@@ -56,10 +56,10 @@ class Auteur:
 
 # just for testing if it work well, it would be removed in the final project
 with driver.session() as session:
-        created_person = session.execute_write(Auteur.ajouterAuteur, "1", "John", "Doe", "john.doe@gmail.com", "1995-01-01", None)
+        created_person = session.execute_write(Auteur.ajouterAuteur, "12", "Johni", "Doe", "john.doe@gmail.com", "1995-01-01", None)
         print(f'Created person: {created_person}')
 
-        found_person = session.execute_read(Auteur.afficherAuteur, "1")
+        found_person = session.execute_read(Auteur.afficherAuteur, "12")
         print(f'Found person: {found_person}')
 
         updated_person = session.execute_write(Auteur.modifierAuteur, "1", "John", "Doe", "john.doe_updated@gmail.com", "1995-01-01", None)
