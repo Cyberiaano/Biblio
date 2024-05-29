@@ -1,5 +1,5 @@
 import logging
-from connexion_db import driver
+from DbConnection.connexion_db import driver
 
 logging.basicConfig(level=logging.INFO)
 

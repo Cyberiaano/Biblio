@@ -1,6 +1,6 @@
 import logging
-from connexion_db import driver
-from Auteur import Auteur
+from DbConnection.connexion_db import driver
+from Classes.Auteur import Auteur
 logging.basicConfig(level=logging.INFO)
 
 class Livre:
