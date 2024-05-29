@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QDialog, QMainWindow
-from connection import Ui_Dialog
-from Gestion import Ui_MainWindow
+from UserInterfaces.connection import Ui_Dialog
+from UserInterfaces.Gestion import Ui_MainWindow
 
 class MyDialog(QDialog):
     def __init__(self):
