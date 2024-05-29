@@ -1,6 +1,24 @@
-from Livre import Livre
+import sys
+from PyQt5.QtWidgets import QApplication, QDialog, QMainWindow
+from connection import Ui_Dialog
+from Gestion import Ui_MainWindow
 
-monLivre = Livre(1, "Le Petit Prince", "Antoine de Saint-Exupéry", "1943", "Conte philosophique", 93, "Le Petit Prince est une œuvre de langue française, la plus connue d'Antoine de Saint-Exupéry. Publié en 1943 à New York simultanément à sa traduction anglaise, c'est une œuvre poétique et philosophique sous l'apparence d'un conte pour enfants.")
-#print(monLivre)
-a = Livre.supprimerLivres(2)
-print(a)
+class MyDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+        self.ui.pushButton_3.clicked.connect(self.open_main_window)
+
+    def open_main_window(self):
+        self.main_window = QMainWindow()
+        self.ui_main = Ui_MainWindow()
+        self.ui_main.setupUi(self.main_window)
+        self.main_window.show()
+        self.close()
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    dialog = MyDialog()
+    dialog.show()
+    sys.exit(app.exec_())
