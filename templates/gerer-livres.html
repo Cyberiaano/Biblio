@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gérer les livres - Bibliothèque</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}">Accueil</a></li>
+                <li><a href="{{ url_for('index') }}">Gérer les livres</a></li>
+                <li><a href="{{ url_for('prets') }}">Gérer les prêts</a></li>
+                <li><a href="gerer-auteurs.html">Gérer les auteurs</a></li>
+                <li><a href="gerer-utilisateurs.html">Gérer les utilisateurs</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        <div class="search-bar">
+            <form action="{{ url_for('search_book') }}" method="GET">
+                <input type="text" id="search-query" name="query" placeholder="Rechercher un livre...">
+                <button type="submit">Rechercher</button>
+            </form>
+            <div id="search-results" class="search-results hidden"></div>
+        </div>
+        <button id="add-book-btn" class="add-book-btn">Ajouter un livre</button>
+        <div class="add-book-form hidden">
+            <h2>Ajouter un livre</h2>
+            <form action="{{ url_for('add_book') }}" method="POST">
+                <div class="form-group">
+                    <label for="title">Titre:</label>
+                    <input type="text" id="title" name="title">
+                </div>
+                <div class="form-group">
+                    <label for="author">Auteur:</label>
+                    <input type="text" id="author" name="author">
+                </div>
+                <div class="form-group">
+                    <label for="date">Date d'édition:</label>
+                    <input type="date" id="date" name="date">
+                </div>
+                <button type="submit">Ajouter</button>
+            </form>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2024 Bibliothèque. Tous droits réservés.</p>
+    </footer>
+
+    <script>
+        document.getElementById("add-book-btn").addEventListener("click", function() {
+            var addBookForm = document.querySelector(".add-book-form");
+            addBookForm.classList.remove("hidden");
+        });
+
+        document.getElementById("search-query").addEventListener("input", function() {
+            let query = this.value;
+            if (query.length > 2) {
+                fetch(`/search_suggestions?query=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        let resultsContainer = document.getElementById("search-results");
+                        resultsContainer.innerHTML = "";
+                        if (data.length > 0) {
+                            let ul = document.createElement("ul");
+                            data.forEach(livre => {
+                                let li = document.createElement("li");
+                                li.textContent = livre.titre;
+                                ul.appendChild(li);
+                            });
+                            resultsContainer.appendChild(ul);
+                            resultsContainer.classList.remove("hidden");
+                        } else {
+                            resultsContainer.classList.add("hidden");
+                        }
+                    });
+            } else {
+                document.getElementById("search-results").classList.add("hidden");
+            }
+        });
+
+        document.addEventListener("click", function(event) {
+            if (!event.target.closest('.search-bar')) {
+                document.getElementById("search-results").classList.add("hidden");
+            }
+        });
+    </script>
+</body>
+</html>

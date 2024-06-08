@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Résultats de la recherche - Bibliothèque</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}">Accueil</a></li>
+                <li><a href="{{ url_for('index') }}">Gérer les livres</a></li>
+                <li><a href="{{ url_for('prets') }}">Gérer les prêts</a></li>
+                <li><a href="gerer-auteurs.html">Gérer les auteurs</a></li>
+                <li><a href="gerer-utilisateurs.html">Gérer les utilisateurs</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        <h2>Résultats de la recherche pour "{{ query }}"</h2>
+        {% if livres %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Titre</th>
+                        <th>Auteur</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for livre in livres %}
+                        <tr>
+                            <td>{{ livre.titre }}</td>
+                            <td>{{ livre.auteur }}</td>
+                            
+                            <td>
+                                <form action="{{ url_for('delete_book', id=livre._id) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce livre ?');">
+                                    <button type="submit">Supprimer</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Aucun livre trouvé.</p>
+        {% endif %}
+    </main>
+    <footer>
+        <p>&copy; 2024 Bibliothèque. Tous droits réservés.</p>
+    </footer>
+</body>
+</html>

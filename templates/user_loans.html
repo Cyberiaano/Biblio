@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prêts de l'utilisateur</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}">Accueil</a></li>
+                <li><a href="{{ url_for('index') }}">Gérer les livres</a></li>
+                <li><a href="{{ url_for('prets') }}">Gérer les prêts</a></li>
+                <li><a href="gerer-auteurs.html">Gérer les auteurs</a></li>
+                <li><a href="gerer-utilisateurs.html">Gérer les utilisateurs</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h2>Prêts de {{ user['first_name'] }} {{ user['last_name'] }}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Livre</th>
+                    <th>Date de début</th>
+                    <th>Date de fin</th>
+                    <th>Prix</th>
+                    <th>État</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pret in prets %}
+                <tr>
+                    <td>{{ pret.LivreTitre }}</td>
+                    <td>{{ pret.DateDeDebut.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ pret.DateDeFin.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ pret.Prix }}DH</td>
+                    <td>{{ 'Rendu' if pret.Etat == 'rendu' else 'Non rendu' }}</td>
+                    <td>
+                        {% if pret.Etat == 'non rendu' %}
+                        <form action="{{ url_for('return_loan', pret_id=pret._id) }}" method="post" style="display:inline;">
+                            <button type="submit">Rendu</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div id="add-loan-form">
+            <h3>Enregistrer un nouveau prêt</h3>
+            <form id="loan-form" action="{{ url_for('add_loan') }}" method="post">
+                <input type="hidden" id="user-id" name="user_id" value="{{ user['_id'] }}">
+                <input type="hidden" id="cin" name="cin" value="{{ user['cin'] }}">
+                <div class="form-group">
+                    <label for="book">Nom du livre:</label>
+                    <select id="book" name="book">
+                        {% for livre in livres %}
+                        <option value="{{ livre._id }}">{{ livre.titre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit">Enregistrer</button>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

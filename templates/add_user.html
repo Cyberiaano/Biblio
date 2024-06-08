@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter un nouvel adhérent</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}">Accueil</a></li>
+                <li><a href="{{ url_for('index') }}">Gérer les livres</a></li>
+                <li><a href="{{ url_for('prets') }}">Gérer les prêts</a></li>
+                <li><a href="gerer-auteurs.html">Gérer les auteurs</a></li>
+                <li><a href="gerer-utilisateurs.html">Gérer les utilisateurs</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h2>Ajouter un nouvel adhérent</h2>
+        <form id="add-user-form" action="{{ url_for('add_user') }}" method="post">
+            <div class="form-group">
+                <label for="first-name">Prénom:</label>
+                <input type="text" id="first-name" name="first-name" value="{{ cin }}">
+            </div>
+            <div class="form-group">
+                <label for="last-name">Nom:</label>
+                <input type="text" id="last-name" name="last-name">
+            </div>
+            <div class="form-group">
+                <label for="cin">CIN:</label>
+                <input type="text" id="cin" name="cin" value="{{ cin }}">
+            </div>
+            <div class="form-group">
+                <label for="phone">Numéro de téléphone:</label>
+                <input type="text" id="phone" name="phone">
+            </div>
+            <div class="form-group">
+                <label for="email">E-mail:</label>
+                <input type="email" id="email" name="email">
+            </div>
+            <button type="submit">Enregistrer</button>
+        </form>
+    </main>
+</body>
+</html>

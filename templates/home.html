@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bibliothèque - Page d'accueil</title>
+    <link rel="stylesheet"  href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}">Accueil</a></li>
+                <li><a href="{{ url_for('index') }}">Gérer les livres</a></li>
+                <li><a href="{{ url_for('prets') }}">Gérer les prêts</a></li>
+                <li><a href="gerer-auteurs.html">Gérer les auteurs</a></li>
+                <li><a href="gerer-utilisateurs.html">Gérer les utilisateurs</a></li>
+            </ul>
+        </nav>
+        <div class="header-content">
+            <h1>Bienvenue </h1>
+            <p>Votre destination pour les livres, les prêts, les auteurs et plus encore.</p>
+        </div>
+    </header>
+    <main>
+        <h2>Gestion de la bibliothèque</h2>
+        <p>Veuillez utiliser la barre de navigation ci-dessus pour accéder aux différentes sections de gestion.</p>
+    </main>
+    <footer>
+        <p>&copy; 2024 Bibliothèque. Tous droits réservés.</p>
+    </footer>
+</body>
+</html>

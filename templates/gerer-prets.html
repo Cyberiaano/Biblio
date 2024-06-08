@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gérer les prêts - Bibliothèque</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}">Accueil</a></li>
+                <li><a href="{{ url_for('index') }}">Gérer les livres</a></li>
+                <li><a href="{{ url_for('prets') }}">Gérer les prêts</a></li>
+                <li><a href="gerer-auteurs.html">Gérer les auteurs</a></li>
+                <li><a href="gerer-utilisateurs.html">Gérer les utilisateurs</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h2>Gérer les prêts</h2>
+        <div id="search-user-form">
+            <h3>Rechercher un utilisateur</h3>
+            <form id="search-form" action="{{ url_for('check_user') }}" method="get">
+                <div class="form-group">
+                    <label for="cin">CIN de l'utilisateur:</label>
+                    <input type="text" id="cin" name="cin">
+                </div>
+                <button type="submit">Rechercher</button>
+            </form>
+        </div>
+    </main>
+</body>
+</html>
