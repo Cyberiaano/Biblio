@@ -3,6 +3,7 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 from datetime import datetime, timedelta
 from bson.errors import InvalidId
+from neo4j import GraphDatabase
 
 app = Flask(__name__)
 app.secret_key = 'votre_cle_secrete'
@@ -14,7 +15,9 @@ collection_livre = db.livres
 collection_adherents = db.adherents
 collection_prets = db.prets
 
-# Route pour la page d'accueil
+# Connexion à Neo4j
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
+
 @app.route('/')
 def home():
     return render_template('home.html')
@@ -28,7 +31,61 @@ def prets():
     # Récupérer tous les livres pour le formulaire de sélection de livre
     livres = list(collection_livre.find())
     return render_template('gerer-prets.html', livres=livres)
-# Route pour rechercher un livre
+
+@app.route('/gerer_auteurs')
+def auteurs():
+    with driver.session() as session:
+        result = session.run("MATCH (b:Auteur) RETURN b")
+        auteurs = [record["b"] for record in result]
+    return render_template('gerer-auteurs.html', auteurs=auteurs)
+@app.route('/ajouter-auteur', methods=['POST'])
+def ajouter_auteur():
+    nom = request.form['nom']
+    prenom = request.form['prenom']
+    date_naissance = request.form['date_naissance']
+    with driver.session() as session:
+        session.run(
+            "CREATE (a:Auteur {nom: $nom, prenom: $prenom, date_naissance: $date_naissance})",
+            nom=nom, prenom=prenom, date_naissance=date_naissance
+        )
+    flash("Auteur ajouté avec succès!")
+    return redirect(url_for('auteurs'))
+
+@app.route('/supprimer-auteur/<id>', methods=['POST'])
+def supprimer_auteur(id):
+    with driver.session() as session:
+        session.run("MATCH (a:Auteur) WHERE ID(a) = $id DELETE a", id=int(id))
+    flash("Auteur supprimé avec succès!")
+    return redirect(url_for('auteurs'))
+
+@app.route('/gerer-utilisateurs', methods=['GET'])
+def utilisateurs():
+    with driver.session() as session:
+        result = session.run("MATCH (u:Utilisateur) RETURN u")
+        utilisateurs = [record["u"] for record in result]
+    return render_template('gerer-utilisateurs.html', utilisateurs=utilisateurs)
+
+@app.route('/ajouter-utilisateur', methods=['POST'])
+def ajouter_utilisateur():
+    nom = request.form['nom']
+    prenom = request.form['prenom']
+    email = request.form['email']
+    password = request.form['password']
+    with driver.session() as session:
+        session.run(
+            "CREATE (u:Utilisateur {nom: $nom, prenom: $prenom, email: $email, password: $password})",
+            nom=nom, prenom=prenom, email=email, password=password
+        )
+    flash("Utilisateur ajouté avec succès!")
+    return redirect(url_for('utilisateurs'))
+
+@app.route('/supprimer-utilisateur/<id>', methods=['POST'])
+def supprimer_utilisateur(id):
+    with driver.session() as session:
+        session.run("MATCH (u:Utilisateur) WHERE ID(u) = $id DELETE u", id=int(id))
+    flash("Utilisateur supprimé avec succès!")
+    return redirect(url_for('utilisateurs'))
+
 @app.route('/search_book', methods=['GET'])
 def search_book():
     query = request.args.get('query')
@@ -38,29 +95,51 @@ def search_book():
         livres = []
     return render_template('search_results.html', livres=livres, query=query)
 
-# Route pour ajouter un livre
+def synchronize_book(book):
+    with driver.session() as session:
+        session.run("MERGE (b:Book {idLivre: $idLivre}) "
+                    "SET b.titre = $titre, b.auteur = $auteur, b.dateEdition = $dateEdition, "
+                    "b.genre = $genre, b.nbPages = $nbPages, b.resume = $resume",
+                    idLivre=str(book['_id']), titre=book['titre'], auteur=book['auteur'],
+                    dateEdition=book['date_edition'], genre=book['genre'],
+                    nbPages=book['nb_pages'], resume=book['resume'])
+
 @app.route('/add_book', methods=['POST'])
 def add_book():
     title = request.form.get('title')
     author = request.form.get('author')
     date = request.form.get('date')
+    genre = request.form.get('genre')
+    nb_pages = request.form.get('nb_pages')
+    resume = request.form.get('resume')
+
     livre = {
         "titre": title,
         "auteur": author,
-        "date_edition": date
+        "date_edition": date,
+        "genre": genre,
+        "nb_pages": nb_pages,
+        "resume": resume
     }
+
     result = collection_livre.insert_one(livre)
     if result.inserted_id:
+        synchronize_book(livre)
         flash("Livre ajouté avec succès !", "success")
     else:
         flash("L'ajout du livre a échoué.", "error")
     return redirect(url_for('index'))
 
-# Route pour supprimer un livre
+def synchronize_delete_book(book_id):
+    with driver.session() as session:
+        session.run("MATCH (b:Book {idLivre: $idLivre}) DETACH DELETE b",
+                    idLivre=str(book_id))
+
 @app.route('/delete_book/<id>', methods=['POST'])
 def delete_book(id):
     result = collection_livre.delete_one({"_id": ObjectId(id)})
     if result.deleted_count:
+        synchronize_delete_book(id)  # Synchronize the deletion
         flash("Livre supprimé avec succès !", "success")
     else:
         flash("La suppression du livre a échoué.", "error")
@@ -131,6 +210,7 @@ def add_user():
     user_data = {
         "cin": request.form.get('cin'),
         "first_name": request.form.get('first-name'),
+       
         "last_name": request.form.get('last-name'),
         "phone": request.form.get('phone'),
         "email": request.form.get('email')
