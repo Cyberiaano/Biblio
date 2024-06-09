@@ -1,26 +1,59 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
-from pymongo import MongoClient
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, session
+from authentication import initialize_admin
+from connexion import driver, collection_adherents,collection_livre,collection_prets
 from bson.objectid import ObjectId
 from datetime import datetime, timedelta
 from bson.errors import InvalidId
-from neo4j import GraphDatabase
+import bcrypt
 
 app = Flask(__name__)
 app.secret_key = 'votre_cle_secrete'
 
-# Connexion à MongoDB
-client = MongoClient('mongodb://localhost:27017/')
-db = client.Bibliothèque
-collection_livre = db.livres
-collection_adherents = db.adherents
-collection_prets = db.prets
 
-# Connexion à Neo4j
-driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    session.pop('username', None)
+    flash("You have been logged out successfully!", "success")
+    return redirect(url_for('login'))
 
-@app.route('/')
+@app.route('/login', methods=['POST'])
+def loginFuc():
+    username = request.form['username']
+    password = request.form['password'].encode('utf-8')
+
+    with driver.session() as neo4j_session:
+        result = neo4j_session.run(
+            "MATCH (u:Utilisateur {nom: $username}) RETURN u.password AS password, u.role AS role",
+            username=username
+        )
+        record = result.single()
+        if record:
+            # Verify the password
+            hashed_password = record['password'].encode('utf-8')
+            if bcrypt.checkpw(password, hashed_password):
+            #if password == hashed_password:
+                # Set user session data
+                session['logged_in'] = True
+                session['username'] = username
+                session['role'] = record['role']
+                return redirect(url_for('home'))  # Redirect to home page after successful login
+            else:
+                # Password incorrect
+                flash("Incorrect username or password", "error")
+                return redirect(url_for('login'))
+        else:
+            # User not found
+            flash("User not found", "error")
+            return redirect(url_for('login'))
+
+@app.route('/home')
 def home():
     return render_template('home.html')
+
+@app.route('/')
+def login():
+    return render_template('login.html')
 
 @app.route('/gerer-livres')
 def index():
@@ -38,6 +71,7 @@ def auteurs():
         result = session.run("MATCH (b:Auteur) RETURN b")
         auteurs = [record["b"] for record in result]
     return render_template('gerer-auteurs.html', auteurs=auteurs)
+
 @app.route('/ajouter-auteur', methods=['POST'])
 def ajouter_auteur():
     nom = request.form['nom']
@@ -58,8 +92,16 @@ def supprimer_auteur(id):
     flash("Auteur supprimé avec succès!")
     return redirect(url_for('auteurs'))
 
+def is_admin():
+    return 'username' in session and 'role' in session and session['role'] == 'admin'
+
 @app.route('/gerer-utilisateurs', methods=['GET'])
 def utilisateurs():
+    # Check if the user is an admin, if not, redirect to home
+    if not is_admin():
+        flash('Unauthorized access', 'error')
+        return redirect(url_for('home'))
+
     with driver.session() as session:
         result = session.run("MATCH (u:Utilisateur) RETURN u")
         utilisateurs = [record["u"] for record in result]
@@ -71,10 +113,13 @@ def ajouter_utilisateur():
     prenom = request.form['prenom']
     email = request.form['email']
     password = request.form['password']
+    role = request.form.get('account_type')
+
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     with driver.session() as session:
         session.run(
-            "CREATE (u:Utilisateur {nom: $nom, prenom: $prenom, email: $email, password: $password})",
-            nom=nom, prenom=prenom, email=email, password=password
+            "CREATE (u:Utilisateur {nom: $nom, prenom: $prenom, email: $email, password: $hashed_password, role: $role})",
+            nom=nom, prenom=prenom, email=email, hashed_password=hashed_password, role=role
         )
     flash("Utilisateur ajouté avec succès!")
     return redirect(url_for('utilisateurs'))
@@ -97,12 +142,14 @@ def search_book():
 
 def synchronize_book(book):
     with driver.session() as session:
-        session.run("MERGE (b:Book {idLivre: $idLivre}) "
-                    "SET b.titre = $titre, b.auteur = $auteur, b.dateEdition = $dateEdition, "
-                    "b.genre = $genre, b.nbPages = $nbPages, b.resume = $resume",
-                    idLivre=str(book['_id']), titre=book['titre'], auteur=book['auteur'],
-                    dateEdition=book['date_edition'], genre=book['genre'],
-                    nbPages=book['nb_pages'], resume=book['resume'])
+        session.run(
+            "MERGE (b:Book {idLivre: $idLivre}) "
+            "SET b.titre = $titre, b.auteur = $auteur, b.dateEdition = $dateEdition, "
+            "b.genre = $genre, b.nbPages = $nbPages, b.resume = $resume",
+            idLivre=str(book['_id']), titre=book['titre'], auteur=book['auteur'],
+            dateEdition=book['date_edition'], genre=book['genre'],
+            nbPages=book['nb_pages'], resume=book['resume']
+        )
 
 @app.route('/add_book', methods=['POST'])
 def add_book():
@@ -132,8 +179,7 @@ def add_book():
 
 def synchronize_delete_book(book_id):
     with driver.session() as session:
-        session.run("MATCH (b:Book {idLivre: $idLivre}) DETACH DELETE b",
-                    idLivre=str(book_id))
+        session.run("MATCH (b:Book {idLivre: $idLivre}) DETACH DELETE b", idLivre=str(book_id))
 
 @app.route('/delete_book/<id>', methods=['POST'])
 def delete_book(id):
@@ -192,9 +238,11 @@ def add_loan():
     }
     result = collection_prets.insert_one(pret)
     if result.inserted_id:
+        flash("Prêt ajouté avec succès!", "success")
         return redirect(url_for('user_loans', cin=cin))
     else:
-        return jsonify({"success": False})
+        flash("L'ajout du prêt a échoué.", "error")
+        return redirect(url_for('user_loans', cin=cin))
 
 @app.route('/return_loan/<pret_id>', methods=['POST'])
 def return_loan(pret_id):
@@ -210,18 +258,20 @@ def add_user():
     user_data = {
         "cin": request.form.get('cin'),
         "first_name": request.form.get('first-name'),
-       
         "last_name": request.form.get('last-name'),
         "phone": request.form.get('phone'),
         "email": request.form.get('email')
     }
     result = collection_adherents.insert_one(user_data)
     if result.inserted_id:
-        user_id = str(result.inserted_id)
+        flash("Utilisateur ajouté avec succès!", "success")
         return redirect(url_for('user_loans', cin=user_data['cin']))
     else:
         flash("Échec de l'ajout de l'utilisateur.", "error")
         return redirect(url_for('prets'))
+    
+
 
 if __name__ == '__main__':
     app.run(debug=True)
+    initialize_admin()

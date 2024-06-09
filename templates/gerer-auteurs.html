@@ -82,15 +82,15 @@
             </div>
             <div class="right-column">
                 <h2>Liste des auteurs</h2>
-                <ul>
+                <table>
                     {% for auteur in auteurs %}
-                        <li>{{ auteur['nom'] }} {{ auteur['prenom'] }} ({{ auteur['date_naissance'] }})
-                            <form action="{{ url_for('supprimer_auteur', id=auteur.id) }}" method="POST" style="display:inline;">
+                        <tr><td>{{ auteur['nom'] }}</td><td> {{ auteur['prenom'] }} </td><td> ({{ auteur['date_naissance'] }})</td>
+                           <td> <form action="{{ url_for('supprimer_auteur', id=auteur.id) }}" method="POST" style="display:inline;">
                                 <button type="submit">Supprimer</button>
-                            </form>
-                        </li>
+                            </form></td>
+                        </tr>
                     {% endfor %}
-                </ul>
+                </table>
             </div>
         </div>
     </main>
