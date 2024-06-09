@@ -8,7 +8,6 @@ collection_livre = db.livres
 collection_adherents = db.adherents
 collection_prets = db.prets
 
-# Connexion à Neo4j
-username='neo4j'
-password='youdourouch'
-driver = GraphDatabase.driver("neo4j://localhost:7687", auth=(username, password))
+username = 'neo4j'
+password = 'password'
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=(username, password))
