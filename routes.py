@@ -157,14 +157,36 @@ def init_routes(app):
             "nb_pages": nb_pages,
             "resume": resume
         }
+        
+        with driver.session() as session:
+            result = session.run("MATCH (a:Auteur {nom: $nom}) RETURN a", nom=author)
+            author_record = result.single()
 
-        result = collection_livre.insert_one(livre)
-        if result.inserted_id:
-            synchronize_Ajout_book(livre)
-            flash("Livre ajouté avec succès !", "success")
-        else:
-            flash("L'ajout du livre a échoué.", "error")
+            if author_record:
+                # If author exists, add the book to MongoDB
+                result = collection_livre.insert_one(livre)
+                if result.inserted_id:
+                    synchronize_Ajout_book(livre, author_record['a'])
+                    flash("Livre ajouté avec succès !", "success")
+                else:
+                    flash("L'ajout du livre a échoué.", "error")
+            else:
+                flash("L'auteur n'existe pas.", "error")
+        
         return redirect(url_for('index'))
+
+    def synchronize_Ajout_book(book, author):
+        with driver.session() as session:
+            session.run(
+                "MERGE (b:Book {idLivre: $idLivre}) "
+                "SET b.titre = $titre, b.dateEdition = $dateEdition, "
+                "b.genre = $genre, b.nbPages = $nbPages, b.resume = $resume "
+                "WITH b "
+                "MATCH (a:Auteur {nom: $author_nom}) "
+                "CREATE (b)-[:ECRIT_PAR]->(a)",
+                idLivre=str(book['_id']), titre=book['titre'], dateEdition=book['date_edition'],
+                genre=book['genre'], nbPages=book['nb_pages'], resume=book['resume'], author_nom=book['auteur']
+            )
 
 
 

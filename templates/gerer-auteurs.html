@@ -44,6 +44,8 @@
                 <li><a href="{{ url_for('prets') }}">Gérer les prêts</a></li>
                 <li><a href="{{ url_for('auteurs') }}">Gérer les auteurs</a></li>
                 <li><a href="{{ url_for('utilisateurs') }}">Gérer les utilisateurs</a></li>
+                <li><a href="{{ url_for('logout') }}">Log out</a></li>
+
             </ul>
         </nav>
         <div class="header-content">
@@ -88,6 +90,7 @@
                            <td> <form action="{{ url_for('supprimer_auteur', id=auteur.id) }}" method="POST" style="display:inline;">
                                 <button type="submit">Supprimer</button>
                             </form></td>
+                            
                         </tr>
                     {% endfor %}
                 </table>
