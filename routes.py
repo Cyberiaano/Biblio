@@ -49,7 +49,23 @@ def init_routes(app):
 
     @app.route('/home')
     def home():
-        return render_template('home.html')
+        today = datetime.now()
+        prets_non_rendus = list(collection_prets.find({
+            "Etat": "non rendu",
+            "DateDeFin": {"$lt": today}
+        }))
+
+        # Enrichir chaque prêt avec les informations de l'adhérent
+        for pret in prets_non_rendus:
+            adherent = collection_adherents.find_one({"_id": pret["IdAdherent"]})
+            livre = collection_livre.find_one({"_id": pret["IdLivre"]})
+            pret["AdherentNom"] = f'{adherent["first_name"]} {adherent["last_name"]}' if adherent else "Inconnu"
+            pret["LivreTitre"] = livre["titre"] if livre else "Inconnu"
+
+        livres = list(collection_livre.find())
+        return render_template('home.html', prets_non_rendus=prets_non_rendus,livres=livres)
+        #return render_template('home.html')
+        
 
     @app.route('/')
     def login():
@@ -200,22 +216,48 @@ def init_routes(app):
             flash("La suppression du livre a échoué.", "error")
         return redirect(url_for('search_book'))
 
+    # @app.route('/user_loans/<cin>')
+    # def user_loans(cin):
+    #     user = collection_adherents.find_one({"cin": cin})
+    #     if user:
+    #         user['_id'] = str(user['_id'])
+    #         prets = list(collection_prets.find({"IdAdherent": ObjectId(user['_id'])}))
+    #         for pret in prets:
+    #             pret['_id'] = str(pret['_id'])
+    #             pret['IdLivre'] = str(pret['IdLivre'])
+    #             pret['IdAdherent'] = str(pret['IdAdherent'])
+    #             livre = collection_livre.find_one({"_id": ObjectId(pret['IdLivre'])})
+    #             pret['LivreTitre'] = livre['titre'] if livre else 'Inconnu'
+    #         livres = list(collection_livre.find())
+    #         return render_template('user_loans.html', user=user, prets=prets, livres=livres)
+    #     else:
+    #         return render_template('add_user.html', cin=cin)
+
+
+    def calculer_penalite(date_de_fin, date_actuelle, tarif_minute=1):
+        if date_actuelle > date_de_fin:
+            minutes_de_retard = (date_actuelle - date_de_fin).total_seconds() / 60
+            return int(minutes_de_retard * tarif_minute)
+        return 0
+
     @app.route('/user_loans/<cin>')
     def user_loans(cin):
         user = collection_adherents.find_one({"cin": cin})
         if user:
             user['_id'] = str(user['_id'])
             prets = list(collection_prets.find({"IdAdherent": ObjectId(user['_id'])}))
+            today = datetime.now()
             for pret in prets:
                 pret['_id'] = str(pret['_id'])
                 pret['IdLivre'] = str(pret['IdLivre'])
                 pret['IdAdherent'] = str(pret['IdAdherent'])
                 livre = collection_livre.find_one({"_id": ObjectId(pret['IdLivre'])})
                 pret['LivreTitre'] = livre['titre'] if livre else 'Inconnu'
+                pret['Penalite'] = calculer_penalite(pret['DateDeFin'], today)
             livres = list(collection_livre.find())
-            return render_template('user_loans.html', user=user, prets=prets, livres=livres)
+            return render_template('user_loans.html', user=user, prets=prets, livres=livres, today=today)
         else:
-            return render_template('add_user.html', cin=cin)
+            return render_template('add_user.html',cin=cin)
 
     @app.route('/check_user', methods=['GET'])
     def check_user():
@@ -236,7 +278,7 @@ def init_routes(app):
 
         book_id = request.form.get('book')
         date_debut = datetime.now()
-        date_fin = date_debut + timedelta(days=10)
+        date_fin = date_debut + timedelta(seconds=2)
         pret = {
             "IdLivre": ObjectId(book_id),
             "IdAdherent": ObjectId(user_id),
@@ -279,3 +321,6 @@ def init_routes(app):
         else:
             flash("Échec de l'ajout de l'utilisateur.", "error")
             return redirect(url_for('prets'))
+
+    
+       

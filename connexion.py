@@ -9,5 +9,5 @@ collection_adherents = db.adherents
 collection_prets = db.prets
 
 username = 'neo4j'
-password = 'password'
-driver = GraphDatabase.driver("bolt://localhost:7687", auth=(username, password))
+password = 'youdourouch'
+driver = GraphDatabase.driver("neo4j://localhost:7687", auth=(username, password))

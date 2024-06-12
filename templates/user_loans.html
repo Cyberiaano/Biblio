@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prêts de l'utilisateur</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .date-expiree {
+            color: red;
+       } 
+       </style>
 </head>
 <body>
     <header>
@@ -27,6 +32,7 @@
                     <th>Date de début</th>
                     <th>Date de fin</th>
                     <th>Prix</th>
+                    <th>Pénalité</th>
                     <th>État</th>
                     <th>Action</th>
                 </tr>
@@ -36,8 +42,11 @@
                 <tr>
                     <td>{{ pret.LivreTitre }}</td>
                     <td>{{ pret.DateDeDebut.strftime('%d/%m/%Y') }}</td>
-                    <td>{{ pret.DateDeFin.strftime('%d/%m/%Y') }}</td>
+                    <td class="{{ 'date-expiree' if pret.DateDeFin < today else '' }}">
+                        {{ pret.DateDeFin.strftime('%d/%m/%Y') }}
+                    </td>
                     <td>{{ pret.Prix }}DH</td>
+                    <td>{{ pret.Penalite }}DH</td>
                     <td>{{ 'Rendu' if pret.Etat == 'rendu' else 'Non rendu' }}</td>
                     <td>
                         {% if pret.Etat == 'non rendu' %}

@@ -13,38 +13,94 @@
                 <li><a href="{{ url_for('home') }}">Accueil</a></li>
                 <li><a href="{{ url_for('index') }}">Gérer les livres</a></li>
                 <li><a href="{{ url_for('prets') }}">Gérer les prêts</a></li>
-                <li><a href="{{ url_for('auteurs') }}">Gérer les auteurs</a></li>
-                <li><a href="{{ url_for('utilisateurs') }}">Gérer les utilisateurs</a></li>
-                <li><a href="{{ url_for('logout') }}">Log out</a></li>
-
+                <li><a href="gerer-auteurs.html">Gérer les auteurs</a></li>
+                <li><a href="gerer-utilisateurs.html">Gérer les utilisateurs</a></li>
             </ul>
         </nav>
     </header>
     <main>
         <h2>Ajouter un nouvel adhérent</h2>
-        <form id="add-user-form" action="{{ url_for('add_user') }}" method="post">
+        <form id="add-user-form" action="{{ url_for('add_user') }}" method="post" onsubmit="return validateForm()">
             <div class="form-group">
                 <label for="first-name">Prénom:</label>
-                <input type="text" id="first-name" name="first-name" value="{{ cin }}">
+                <input type="text" id="first-name" name="first-name" value="{{ cin }}" required>
+                <span id="first-name-error" style="color:red; display:none;">Veuillez entrer un prénom.</span>
             </div>
             <div class="form-group">
                 <label for="last-name">Nom:</label>
-                <input type="text" id="last-name" name="last-name">
+                <input type="text" id="last-name" name="last-name" required>
+                <span id="last-name-error" style="color:red; display:none;">Veuillez entrer un nom.</span>
             </div>
             <div class="form-group">
                 <label for="cin">CIN:</label>
-                <input type="text" id="cin" name="cin" value="{{ cin }}">
+                <input type="text" id="cin" name="cin" value="{{ cin }}" required>
+                <span id="cin-error" style="color:red; display:none;">Veuillez entrer un CIN.</span>
             </div>
             <div class="form-group">
                 <label for="phone">Numéro de téléphone:</label>
-                <input type="text" id="phone" name="phone">
+                <input type="text" id="phone" name="phone" required>
+                <span id="phone-error" style="color:red; display:none;">Veuillez entrer un numéro de téléphone.</span>
             </div>
             <div class="form-group">
                 <label for="email">E-mail:</label>
-                <input type="email" id="email" name="email">
+                <input type="email" id="email" name="email" required>
+                <span id="email-error" style="color:red; display:none;">Veuillez entrer une adresse e-mail valide.</span>
             </div>
             <button type="submit">Enregistrer</button>
         </form>
     </main>
+    <script>
+        function validateForm() {
+            let valid = true;
+
+            const firstName = document.getElementById('first-name');
+            const firstNameError = document.getElementById('first-name-error');
+            if (firstName.value.trim() === '') {
+                firstNameError.style.display = 'block';
+                valid = false;
+            } else {
+                firstNameError.style.display = 'none';
+            }
+
+            const lastName = document.getElementById('last-name');
+            const lastNameError = document.getElementById('last-name-error');
+            if (lastName.value.trim() === '') {
+                lastNameError.style.display = 'block';
+                valid = false;
+            } else {
+                lastNameError.style.display = 'none';
+            }
+
+            const cin = document.getElementById('cin');
+            const cinError = document.getElementById('cin-error');
+            if (cin.value.trim() === '') {
+                cinError.style.display = 'block';
+                valid = false;
+            } else {
+                cinError.style.display = 'none';
+            }
+
+            const phone = document.getElementById('phone');
+            const phoneError = document.getElementById('phone-error');
+            if (phone.value.trim() === '') {
+                phoneError.style.display = 'block';
+                valid = false;
+            } else {
+                phoneError.style.display = 'none';
+            }
+
+            const email = document.getElementById('email');
+            const emailError = document.getElementById('email-error');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email.value.trim())) {
+                emailError.style.display = 'block';
+                valid = false;
+            } else {
+                emailError.style.display = 'none';
+            }
+
+            return valid;
+        }
+    </script>
 </body>
 </html>

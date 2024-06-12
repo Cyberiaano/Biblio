@@ -26,6 +26,39 @@
     <main>
         <h2>Gestion de la bibliothèque</h2>
         <p>Veuillez utiliser la barre de navigation ci-dessus pour accéder aux différentes sections de gestion.</p>
+        
+        <!-- Section pour afficher les prêts non rendus -->
+        <h3>Prêts en retard</h3>
+        <ul class="prets-non-rendus">
+            {% for pret in prets_non_rendus %}
+            <li class="pret-item">
+                <div><strong>Adhérent :</strong> {{ pret.AdherentNom }}</div>
+                <div><strong>Livre :</strong> {{ pret.LivreTitre }}</div>
+                <div><strong>Date de début :</strong> {{ pret.DateDeDebut.strftime('%d-%m-%Y %H:%M:%S') }}</div>
+                <div><strong>Date de fin :</strong> {{ pret.DateDeFin.strftime('%d-%m-%Y %H:%M:%S') }}</div>
+            </li>
+            {% endfor %}
+        </ul>
+        <style>
+            .prets-non-rendus {
+                list-style-type: none;
+                padding: 0;
+            }
+            .pret-item {
+                background-color: #fff;
+                margin: 10px 0;
+                padding: 15px;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            }
+            .pret-item strong {
+                display: inline-block;
+                width: 150px;
+            }
+            .pret-item div {
+                margin: 5px 0;
+            }
+        </style>    
     </main>
     <footer>
         <p>&copy; 2024 Bibliothèque. Tous droits réservés.</p>
